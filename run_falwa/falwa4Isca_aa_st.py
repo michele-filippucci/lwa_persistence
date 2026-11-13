@@ -11,7 +11,7 @@ from wrapper import qgpv_eqlat_lwa
 from oopinterface import QGFieldNH18
 import utilities as utilities
 
-for run in np.arange(13,14,1):
+for run in np.arange(13,613,1):
   str_run = str(run).zfill(4) 
   print('processing run: ' + str_run)
 
@@ -77,6 +77,7 @@ for run in np.arange(13,14,1):
   
   qgpv = []
   qref = []
+  uref = []
   lwa = []
   u_baro = []
   adv_flux_f1 = []
@@ -105,6 +106,7 @@ for run in np.arange(13,14,1):
     
     qgpv.append(xr.DataArray(qgfield_object.qgpv,dims=['height','lat','lon'],coords={'height':height,'lat':lat,'lon':lon})) #'Qusigeostrophic potential vorticity (QGPV)')
     qref.append(xr.DataArray(qgfield_object.qref,dims=['height','lat'],coords={'height':height,'lat':lat}))
+    uref.append(xr.DataArray(qgfield_object.uref,dims=['height','lat'],coords={'height':height,'lat':lat}))
     lwa.append(xr.DataArray(qgfield_object.lwa,dims=['height','lat','lon'],coords={'height':height,'lat':lat,'lon':lon})) #'Local wave activity (LWA)'
     u_baro.append(xr.DataArray(qgfield_object.u_baro,dims=['lat','lon'],coords={'lat':lat,'lon':lon})) #'Advective flux F1'
     adv_flux_f1.append(xr.DataArray(qgfield_object.adv_flux_f1,dims=['lat','lon'],coords={'lat':lat,'lon':lon})) #'Advective flux F1'
@@ -114,6 +116,7 @@ for run in np.arange(13,14,1):
   #convert lists to data arrays
   qgpv = xr.concat(qgpv,dim='time').assign_coords({'time':time})
   qref = xr.concat(qref,dim='time').assign_coords({'time':time})
+  uref = xr.concat(uref,dim='time').assign_coords({'time':time})
   lwa = xr.concat(lwa,dim='time').assign_coords({'time':time})
   u_baro = xr.concat(u_baro,dim='time').assign_coords({'time':time})
   adv_flux_f1 = xr.concat(adv_flux_f1,dim='time').assign_coords({'time':time})
@@ -126,12 +129,15 @@ for run in np.arange(13,14,1):
   density_weighted_lwa = xr.DataArray(density_weighted_lwa_NPA,dims=['time','lat','lon'],coords={'time':time,'lat':lat,'lon':lon}) #'Advective flux F1'
   density_weighted_qref_NPA = np.sum(coeff[np.newaxis,:,np.newaxis]*qref.values[:,1:,:],axis=1)/prefactor
   density_weighted_qref = xr.DataArray(density_weighted_qref_NPA,dims=['time','lat'],coords={'time':time,'lat':lat})
+  density_weighted_uref_NPA = np.sum(coeff[np.newaxis,:,np.newaxis]*uref.values[:,1:,:],axis=1)/prefactor
+  density_weighted_uref = xr.DataArray(density_weighted_uref_NPA,dims=['time','lat'],coords={'time':time,'lat':lat})
   
   qgpv.name = 'qgpv'
   ds_new = qgpv.to_dataset()
   ds_new['dw_qgpv'] = density_weighted_qgpv
   ds_new['dw_lwa'] = density_weighted_lwa
   ds_new['dw_qref'] = density_weighted_qref
+  ds_new['dw_uref'] = density_weighted_uref
   ds_new['u_baro'] = u_baro
   ds_new['adv_flux_f1'] = adv_flux_f1
   ds_new['adv_flux_f2'] = adv_flux_f2
